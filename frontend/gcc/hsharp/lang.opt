@@ -1,0 +1,21 @@
+; lang.opt -- Options for the GNU H# frontend (hhc).
+;
+; See the GCC internals manual for a description of this file's format.
+; Please try to keep this file in ASCII collating order.
+
+Language
+HSharp
+
+I
+HSharp Joined Separate
+; Documented in c-family/c.opt
+
+fhsharp-dump-ast
+HSharp Var(flag_hsharp_dump_ast)
+Dump the parsed H# syntax tree to stderr.
+
+Whsharp-unused
+HSharp Var(warn_hsharp_unused) Warning
+Warn about unused local variables in H# code.
+
+; This comment is to ensure we retain the blank line above.
