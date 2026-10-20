@@ -1,0 +1,5 @@
+fn main() is
+    let a: int = 1
+    let b: f64 = 2.0
+    write(to_string(a + b))
+end
