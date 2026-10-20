@@ -1,0 +1,133 @@
+# Make-lang.in -- Top level -*- makefile -*- fragment for the GNU H# frontend.
+#
+# Provides:
+#   hsharp1      the compiler proper (cc1-like)
+#   hhc          the compiler driver  (the "gdc" of H#)
+
+# Installation names (honour --program-prefix/--program-suffix).
+HHC_INSTALL_NAME = $(shell echo hhc|sed '$(program_transform_name)')
+HHC_TARGET_INSTALL_NAME = $(target_noncanonical)-$(shell echo hhc|sed '$(program_transform_name)')
+
+# The name for selecting hsharp in LANGUAGES.
+.PHONY: hsharp
+
+hsharp: hsharp1$(exeext)
+hsharp.serial = hsharp1$(exeext)
+
+# Use strict warnings for this front end.
+hsharp-warn = $(STRICT_WARN)
+
+# ---------------------------------------------------------------------------
+# The driver: hhc
+# ---------------------------------------------------------------------------
+
+HHC_OBJS = $(GCC_OBJS) hsharp/hsharp-spec.o
+
+hhc$(exeext): $(HHC_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a $(LIBDEPS)
+	+$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	  $(HHC_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a \
+	  $(EXTRA_GCC_LIBS) $(LIBS)
+
+# A copy of the driver that calls the cross compiler.
+hhc-cross$(exeext): hhc$(exeext)
+	-rm -f hhc-cross$(exeext)
+	cp hhc$(exeext) hhc-cross$(exeext)
+
+CFLAGS-hsharp/hsharp-spec.o += $(DRIVER_DEFINES)
+
+# ---------------------------------------------------------------------------
+# The compiler proper: hsharp1
+# ---------------------------------------------------------------------------
+
+HSHARP_OBJS = \
+	hsharp/hsharp-lang.o \
+	hsharp/hsharp-lex.o \
+	hsharp/hsharp-parse.o \
+	hsharp/hsharp-gen.o
+
+HSHARP_ALL_OBJS = $(HSHARP_OBJS)
+
+hsharp1$(exeext): $(HSHARP_ALL_OBJS) attribs.o $(BACKEND) $(LIBDEPS) $(hsharp.prev)
+	@$(call LINK_PROGRESS,$(INDEX.hsharp),start)
+	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	      $(HSHARP_OBJS) attribs.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
+	@$(call LINK_PROGRESS,$(INDEX.hsharp),end)
+
+# ---------------------------------------------------------------------------
+# Build hooks
+# ---------------------------------------------------------------------------
+
+hsharp.srcextra:
+hsharp.all.cross: hhc$(exeext)
+hsharp.start.encap: hhc$(exeext)
+hsharp.rest.encap:
+hsharp.info:
+hsharp.dvi:
+hsharp.pdf:
+hsharp.install-pdf:
+hsharp.html:
+hsharp.man:
+hsharp.srcinfo:
+hsharp.srcman:
+hsharp.install-plugin:
+hsharp.install-info:
+hsharp.install-html:
+hsharp.install-man:
+hsharp.uninstall:
+
+hsharp.tags: force
+	cd $(srcdir)/hsharp; etags -o TAGS.sub *.cc *.h; \
+	etags --include TAGS.sub --include ../TAGS.sub
+
+lang_checks += check-hsharp
+lang_checks_parallelized += check-hsharp
+check_hsharp_parallelize = 1
+
+selftest-hsharp:
+
+# ---------------------------------------------------------------------------
+# Install hooks
+# ---------------------------------------------------------------------------
+
+hsharp.install-common: installdirs
+	-rm -f $(DESTDIR)$(bindir)/$(HHC_INSTALL_NAME)$(exeext)
+	$(INSTALL_PROGRAM) hhc$(exeext) $(DESTDIR)$(bindir)/$(HHC_INSTALL_NAME)$(exeext)
+	-if test -f hsharp1$(exeext); then \
+	  if test -f hhc-cross$(exeext); then \
+	    :; \
+	  else \
+	    rm -f $(DESTDIR)$(bindir)/$(HHC_TARGET_INSTALL_NAME)$(exeext); \
+	    ( cd $(DESTDIR)$(bindir) && \
+	      $(LN) $(HHC_INSTALL_NAME)$(exeext) $(HHC_TARGET_INSTALL_NAME)$(exeext) ); \
+	  fi; \
+	fi
+
+# ---------------------------------------------------------------------------
+# Clean hooks
+# ---------------------------------------------------------------------------
+
+hsharp.mostlyclean:
+	-rm -f hsharp/*$(objext) hsharp/xforward hsharp/fflags
+	-rm -f hsharp/*$(coverageexts)
+hsharp.clean: hsharp.mostlyclean
+hsharp.distclean:
+	-rm -f hsharp/Makefile hsharp/Make-host hsharp/Make-target
+	-rm -f hsharp/config.status hsharp/config.cache
+hsharp.maintainer-clean:
+
+# ---------------------------------------------------------------------------
+# Stage hooks
+# ---------------------------------------------------------------------------
+
+hsharp.stage1: stage1-start
+	-mv hsharp/*$(objext) stage1/hsharp
+hsharp.stage2: stage2-start
+	-mv hsharp/*$(objext) stage2/hsharp
+hsharp.stage3: stage3-start
+	-mv hsharp/*$(objext) stage3/hsharp
+hsharp.stage4: stage4-start
+	-mv hsharp/*$(objext) stage4/hsharp
+hsharp.stageprofile: stageprofile-start
+	-mv hsharp/*$(objext) stageprofile/hsharp
+hsharp.stagefeedback: stagefeedback-start
+	-mv hsharp/*$(objext) stagefeedback/hsharp
