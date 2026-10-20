@@ -1,0 +1,13 @@
+fn main() is
+    let a: int = 7
+    let b: int = 3
+    write("a+b = " + to_string(a + b))
+    write("a-b = " + to_string(a - b))
+    write("a*b = " + to_string(a * b))
+    write("a/b = " + to_string(a / b))
+    write("a%b = " + to_string(a % b))
+    write("prec = " + to_string(2 + 3 * 4))
+    write("neg  = " + to_string(-a))
+    let x: f64 = 1.5
+    write("f64  = " + to_string(x * 2.0))
+end
