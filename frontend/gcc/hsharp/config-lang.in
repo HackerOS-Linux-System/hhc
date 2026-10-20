@@ -1,0 +1,15 @@
+# config-lang.in -- Top level configure fragment for the GNU H# frontend (hhc).
+#
+# GCC's top-level configure globs "gcc/*/config-lang.in", so copying this
+# directory to <gcc-src>/gcc/hsharp is all that is needed to make
+# "--enable-languages=hsharp" available.
+
+language="hsharp"
+
+compilers="hsharp1\$(exeext)"
+
+# Files scanned by gengtype for GTY(()) markers.
+gtfiles="\$(srcdir)/hsharp/hsharp-lang.cc \$(srcdir)/hsharp/hsharp-gen.cc"
+
+# Not built unless explicitly requested (like D, Go, Rust ...).
+build_by_default="no"
