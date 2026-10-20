@@ -1,0 +1,43 @@
+fn classify(n: int) -> string is
+    if n < 0 is
+        return "negative"
+    elsif n == 0 is
+        return "zero"
+    else is
+        return "positive"
+    end
+end
+
+fn main() is
+    write(classify(-5))
+    write(classify(0))
+    write(classify(9))
+
+    let mut i: int = 0
+    while i < 3 is
+        write("while {i}")
+        i += 1
+    end
+
+    let mut n: int = 0
+    loop is
+        n += 1
+        if n == 4 is
+            break
+        end
+    end
+    write("loop stopped at {n}")
+
+    let mut sum: int = 0
+    for k in 1..=10 is
+        if k % 2 == 0 is
+            continue
+        end
+        sum += k
+    end
+    write("sum of odd 1..10 = {sum}")
+
+    for k in 0..3 is
+        write("k={k}")
+    end
+end
