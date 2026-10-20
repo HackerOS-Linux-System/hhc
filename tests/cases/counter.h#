@@ -1,0 +1,16 @@
+using "2026"
+
+;; adapted from examples/02-mixed-files
+pub fn sum_to(n: int) -> int is
+    let mut total: int = 0
+    let mut i: int = 1
+    while i <= n is
+        total += i
+        i += 1
+    end
+    return total
+end
+
+fn main() is
+    write("sum 1..10 = " + to_string(sum_to(10)))
+end
