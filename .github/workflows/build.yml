@@ -1,1 +1,189 @@
+name: build hhc (GCC + H# frontend)
 
+# Builds the newest stable GCC release from source with the H# frontend
+# overlaid, installs it, runs tests/cases against the resulting `hhc` binary
+# and publishes a tarball per architecture.
+#
+#   push / PR       build + test
+#   tag v*          ... and attach the tarballs to a GitHub release
+#   weekly cron     picks up new GCC releases automatically
+#   manual          choose any GCC ref (e.g. master, releases/gcc-15.2.0)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      gcc_ref:
+        description: "GCC ref: latest | master | releases/gcc-X.Y.Z | branch"
+        default: "latest"
+        required: false
+      with_cxx:
+        description: "Also build the C++ compiler (much slower)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  HHC_GCC_REF: ${{ inputs.gcc_ref || 'latest' }}
+
+jobs:
+  # ---------------------------------------------------------------- lua
+  lua-check:
+    name: Lua build scripts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.5
+        run: |
+          ./scripts/bootstrap-lua.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Syntax check
+        run: lua5.5 hhc.lua selfcheck
+      - name: Unit tests
+        run: lua5.5 tests/selftest.lua
+
+  # ------------------------------------------------------------ resolve
+  resolve:
+    name: Resolve GCC version
+    runs-on: ubuntu-24.04
+    outputs:
+      gcc_ref: ${{ steps.r.outputs.gcc_ref }}
+      gcc_commit: ${{ steps.r.outputs.gcc_commit }}
+      gcc_label: ${{ steps.r.outputs.gcc_label }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.5
+        run: |
+          ./scripts/bootstrap-lua.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - id: r
+        name: Newest stable GCC
+        run: lua5.5 hhc.lua resolve --github-output
+      - name: Summary
+        run: |
+          echo "### GCC to build" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`${{ steps.r.outputs.gcc_ref }}\` (${{ steps.r.outputs.gcc_commit }})" >> "$GITHUB_STEP_SUMMARY"
+
+  # -------------------------------------------------------------- build
+  build:
+    name: hhc / ${{ matrix.arch }} / GCC ${{ needs.resolve.outputs.gcc_label }}
+    needs: [lua-check, resolve]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,     arch: x86_64 }
+          - { os: ubuntu-24.04-arm, arch: aarch64 }
+    env:
+      HHC_GCC_REF: ${{ needs.resolve.outputs.gcc_ref }}
+      HHC_CCACHE: "1"
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 3G
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua 5.5
+        run: |
+          ./scripts/bootstrap-lua.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install build dependencies
+        run: lua5.5 hhc.lua deps
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.arch }}-${{ needs.resolve.outputs.gcc_commit }}
+          restore-keys: |
+            ccache-${{ matrix.arch }}-
+
+      - name: Doctor
+        run: lua5.5 hhc.lua doctor
+
+      - name: Fetch GCC ${{ needs.resolve.outputs.gcc_label }}
+        run: lua5.5 hhc.lua fetch
+
+      - name: Overlay H# frontend
+        run: lua5.5 hhc.lua overlay
+
+      - name: Configure
+        run: |
+          if [ "${{ inputs.with_cxx }}" = "true" ]; then
+            lua5.5 hhc.lua configure --with-cxx
+          else
+            lua5.5 hhc.lua configure
+          fi
+
+      - name: Build
+        run: lua5.5 hhc.lua build
+
+      - name: Install
+        run: lua5.5 hhc.lua install
+
+      - name: Test hhc
+        run: lua5.5 hhc.lua test
+
+      - name: Package
+        id: pkg
+        run: lua5.5 hhc.lua package
+
+      - name: ccache statistics
+        if: always()
+        run: ccache -s || true
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: hhc-${{ matrix.arch }}-gcc${{ needs.resolve.outputs.gcc_label }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Upload configure/build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.arch }}
+          path: |
+            _work/gcc-build/config.log
+            _work/gcc-build/gcc/config.log
+          if-no-files-found: ignore
+
+  # ------------------------------------------------------------ release
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [resolve, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hhc-*
+          merge-multiple: true
+          path: dist
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            `hhc` — GCC-based H# compiler, built from GCC
+            `${{ needs.resolve.outputs.gcc_ref }}`
+            (${{ needs.resolve.outputs.gcc_commit }}).
+
+            Unpack and run `bin/hhc file.h# -o file`.
