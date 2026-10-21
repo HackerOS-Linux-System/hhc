@@ -47,6 +47,20 @@ HSHARP_OBJS = \
 
 HSHARP_ALL_OBJS = $(HSHARP_OBJS)
 
+# Explicit header dependencies.  Without them a parallel build (make -jN) may
+# start compiling a frontend file before GCC has generated insn-modes.h,
+# options.h or the gengtype output (gt-hsharp-*.h, via $(GGC_H)), and fail with
+# "fatal error: insn-modes.h: No such file or directory".
+HSHARP_COMPILE_DEPS = $(CONFIG_H) $(SYSTEM_H) $(CORETYPES_H) $(TM_H) \
+	$(TREE_H) $(GGC_H) $(OPTIONS_H) $(TARGET_H) $(MACHMODE_H) \
+	$(DIAGNOSTIC_CORE_H) $(FUNCTION_H) $(CGRAPH_H) $(LANGHOOKS_DEF_H) \
+	$(srcdir)/hsharp/hsharp.h
+
+$(HSHARP_OBJS): $(HSHARP_COMPILE_DEPS)
+
+hsharp/hsharp-spec.o: $(CONFIG_H) $(SYSTEM_H) $(CORETYPES_H) $(TM_H) \
+	$(GCC_H) $(OPTIONS_H)
+
 hsharp1$(exeext): $(HSHARP_ALL_OBJS) attribs.o $(BACKEND) $(LIBDEPS) $(hsharp.prev)
 	@$(call LINK_PROGRESS,$(INDEX.hsharp),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
