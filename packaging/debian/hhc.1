@@ -1,0 +1,32 @@
+.TH HHC 1 "2026" "hhc" "H# compiler"
+.SH NAME
+hhc \- GCC-based compiler for the H# programming language
+.SH SYNOPSIS
+.B hhc
+[\fIoptions\fR] \fIfile\fR.h# ...
+.SH DESCRIPTION
+.B hhc
+is the GNU Compiler Collection driver for H#, the language of HackerOS.
+It accepts the usual GCC driver options; H# source files use the
+.I .h#
+suffix.
+.SH OPTIONS
+Most GCC options work as documented in gcc(1), for example
+.BR \-o ", " \-O2 ", " \-S ", " \-c ", " \-g ", " \-fsyntax\-only ", " \-x\ hsharp .
+.TP
+.B \-fhsharp\-dump\-ast
+Print a short outline of the parsed program to standard error.
+.SH EXAMPLES
+.nf
+hhc hello.h# \-o hello && ./hello
+hhc \-O2 prog.h# \-o prog
+hhc \-S prog.h#
+.fi
+.SH FILES
+.TP
+.I /usr/lib/hhc
+Installation tree (compiler proper \fBhsharp1\fR, libgcc, start files).
+.SH SEE ALSO
+gcc(1), as(1), ld(1)
+.br
+https://github.com/HackerOS-Linux-System/hhc
