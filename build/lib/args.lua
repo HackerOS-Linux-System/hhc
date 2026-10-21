@@ -29,6 +29,7 @@ function M.apply(cfg, flags)
 		cfg.srcdir = cfg.workdir .. "/gcc-src"
 		cfg.builddir = cfg.workdir .. "/gcc-build"
 	end
+	if flags["distdir"] then cfg.distdir = flags["distdir"] end
 	if flags["jobs"] then cfg.jobs = tonumber(flags["jobs"]) or cfg.jobs end
 	if flags["languages"] then
 		cfg.languages = {}
