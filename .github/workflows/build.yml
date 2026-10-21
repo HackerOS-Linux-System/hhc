@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Lua 5.5
         run: |
-          ./scripts/bootstrap-lua.sh
+          sh ./scripts/bootstrap-lua.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Syntax check
         run: lua5.5 hhc.lua selfcheck
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Lua 5.5
         run: |
-          ./scripts/bootstrap-lua.sh
+          sh ./scripts/bootstrap-lua.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - id: r
         name: Newest stable GCC
@@ -97,7 +97,7 @@ jobs:
 
       - name: Install Lua 5.5
         run: |
-          ./scripts/bootstrap-lua.sh
+          sh ./scripts/bootstrap-lua.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install build dependencies
