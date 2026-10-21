@@ -44,7 +44,7 @@ the H# frontend into the tree, configures, builds, installs, tests and
 packages.
 
 ```sh
-./scripts/bootstrap-lua.sh          # only if you do not have lua5.5 yet
+sh scripts/bootstrap-lua.sh           # only if you do not have lua5.5 yet
 lua5.5 hhc.lua deps                 # apt / dnf / pacman / zypper packages
 lua5.5 hhc.lua all                  # fetch -> overlay -> configure -> build -> install -> test -> package
 ./_install/bin/hhc --version
