@@ -1,0 +1,26 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: hhc
+Source: https://github.com/HackerOS-Linux-System/hhc
+
+Files: *
+Copyright: HackerOS Linux System contributors
+License: BSD-3-Clause
+ The H# frontend (frontend/gcc/hsharp) and the build scripts are distributed
+ under the BSD 3-Clause license; see the LICENSE file of the source repository.
+
+Files: usr/lib/hhc/*
+Copyright: Free Software Foundation, Inc. and GCC contributors
+License: GPL-3+ with GCC Runtime Library Exception
+ hhc is built on top of the GNU Compiler Collection, which is free software:
+ you can redistribute it and/or modify it under the terms of the GNU General
+ Public License as published by the Free Software Foundation, either version 3
+ of the License, or (at your option) any later version. The GCC Runtime
+ Library (libgcc) is additionally covered by the GCC Runtime Library
+ Exception, version 3.1.
+ .
+ On Debian systems the full text of the GNU General Public License version 3
+ can be found in /usr/share/common-licenses/GPL-3.
+ .
+ Corresponding source: https://gcc.gnu.org/git/gcc.git (the exact release is
+ named in the package version) plus the frontend sources in the repository
+ above.
