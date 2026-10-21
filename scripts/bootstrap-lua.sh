@@ -32,13 +32,15 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$LUA_PREFIX/bin"
 
+# NOTE: these run inside `if`, where `set -e` is disabled, so every step
+# must report failure explicitly with `|| return 1`.
 build_tarball() {
-    cd "$WORK"
+    cd "$WORK" || return 1
     curl -fsSL "https://www.lua.org/ftp/lua-$LUA_VERSION.tar.gz" -o lua.tgz || return 1
-    tar xzf lua.tgz
-    cd "lua-$LUA_VERSION"
-    make -j"$(nproc 2>/dev/null || echo 2)" linux >/dev/null
-    install -m 755 src/lua "$LUA_PREFIX/bin/lua5.5"
+    tar xzf lua.tgz || return 1
+    cd "lua-$LUA_VERSION" || return 1
+    make -j"$(nproc 2>/dev/null || echo 2)" linux >/dev/null || return 1
+    install -m 755 src/lua "$LUA_PREFIX/bin/lua5.5" || return 1
 }
 
 build_github() {
