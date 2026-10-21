@@ -32,7 +32,9 @@ local parsed = args.parse(arg)
 args.apply(cfg, parsed.flags)
 local flags = parsed.flags
 
-local STEPS = { "doctor", "fetch", "overlay", "configure", "build", "install", "test", "package" }
+local STEPS = { "doctor", "fetch", "overlay", "configure", "build", "install", "test", "deb" }
+-- extra step, not part of `all`: plain tar.xz of the prefix
+local EXTRA_STEPS = { "package" }
 local step_module = { build = "compile" }
 
 local function run_step(name)
@@ -46,7 +48,7 @@ hhc build driver  --  GCC + H# frontend, binary name: hhc
 usage: lua5.5 hhc.lua <command> [options]
 
 commands:
-  all          doctor, fetch, overlay, configure, build, install, test, package
+  all          doctor, fetch, overlay, configure, build, install, test, deb
   doctor       check host tools and libraries
   deps         install build dependencies (apt / dnf / pacman / zypper)
   resolve      print the GCC ref that would be built (--github-output for CI)
@@ -56,7 +58,8 @@ commands:
   build        make -jN
   install      make install-strip into the prefix, verify bin/hhc
   test         compile and run tests/cases with the installed hhc
-  package      create dist/hhc-<ver>-gcc<ver>-<os>-<arch>.tar.xz
+  deb          create dist/hhc_<ver>+gcc<gccver>-1_<arch>.deb (Debian/Ubuntu)
+  package      (optional) plain tar.xz of the prefix, not for unpacking into /
   clean        remove the build dir (--all: sources, prefix, dist too)
   version      print versions
   selfcheck    syntax-check every Lua file of this build system
@@ -118,12 +121,20 @@ function commands.selfcheck()
 	if bad > 0 then os.exit(1) end
 end
 
-for _, name in ipairs(STEPS) do
-	commands[name] = function() run_step(name) end
+for _, list in ipairs({ STEPS, EXTRA_STEPS }) do
+	for _, name in ipairs(list) do
+		commands[name] = function() run_step(name) end
+	end
 end
 
 function commands.all()
-	for _, name in ipairs(STEPS) do run_step(name) end
+	for _, name in ipairs(STEPS) do
+		if name == "deb" and not sh.have("dpkg-deb") then
+			log.warn("dpkg-deb not found: skipping the .deb step (not a Debian/Ubuntu host)")
+		else
+			run_step(name)
+		end
+	end
 	log.ok("done: %s/bin/hhc", cfg.prefix)
 end
 
