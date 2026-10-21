@@ -14,7 +14,11 @@ function M.run(cfg)
 
 	sh.mkdir_p(cfg.distdir)
 	local out = cfg.distdir .. "/" .. name
-	sh.run(string.format("tar -C %s -cf - . | xz -T0 -6 > %s", sh.q(cfg.prefix), sh.q(out)))
+	-- Everything goes under one top-level directory (hhc-<ver>-.../), so the
+	-- archive can never be unpacked "into" a directory such as / by accident.
+	local top = name:gsub("%.tar%.xz$", "")
+	sh.run(string.format("tar -C %s --transform %s -cf - . | xz -T0 -6 > %s",
+		sh.q(cfg.prefix), sh.q("s,^\\.," .. top .. ","), sh.q(out)))
 	sh.run("sha256sum " .. sh.q(name) .. " > " .. sh.q(name .. ".sha256"), { cwd = cfg.distdir })
 	log.ok("%s", out)
 	state.gha_output("package", out)
