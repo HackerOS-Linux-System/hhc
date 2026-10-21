@@ -47,6 +47,11 @@ return function(root)
 		host_cflags = os.getenv("HHC_HOST_CFLAGS") or "-O2",
 
 		bugurl = "https://github.com/HackerOS-Linux-System/hhc/issues",
+
+		-- Debian packaging (step "deb")
+		deb_revision = os.getenv("HHC_DEB_REVISION") or "1",
+		maintainer = os.getenv("HHC_MAINTAINER")
+			or "HackerOS Linux System <noreply@users.noreply.github.com>",
 	}
 
 	return cfg
